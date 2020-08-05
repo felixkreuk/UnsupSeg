@@ -1,0 +1,49 @@
+hydra:
+  run:
+    dir: /data/felix/runs/unsupervised_segmentor/${now:%Y-%m-%d_%H-%M-%S}-${exp_name}
+
+# DATA
+libri_path: /data/felix/datasets/librispeech
+buckeye_path: /data/felix/datasets/buckeye_processed_by_speaker_balanced
+timit_path: /data/felix/datasets/timit
+libri_subset: train-clean-100
+libri_percent: 1.0
+buckeye_percent: 1.0
+val_ratio: 0.1  # ratio of validation set
+train: timit
+dataloader_n_workers: 10
+
+# MODEL
+cosine_coef: 1.0  # cosine similarity coefficient
+z_proj: 64  # size of projection
+z_proj_linear: true
+z_proj_dropout: 0
+z_dim: 256
+pred_steps: 1  # number of future prediction steps
+pred_offset: 0  # offset of future prediction steps
+batch_shuffle: false  # if 'false' negative samples will be from the same utterance, if 'true' may be from different utterances
+latent_dim: 0  # latent dimension of encoder
+n_negatives: 1  # number of negative samples for contrastive loss
+
+# MISC
+gpus: 1 
+tag: default
+exp_name: default
+project: unsupervised_segmentor
+ckpt: null
+dev_run: false  # fast debug run
+val_check_interval: 0.2  # how often a validation epoch is run
+overfit_pct: 1
+seed: 100
+early_stop_metric: val_max_rval
+early_stop_mode: max
+
+# OPTIMIZATION
+optimizer: adam
+momentum: 0.9
+lr: 0.0002
+lr_anneal_gamma: 1.0
+lr_anneal_step: 1000
+epochs: 200
+grad_clip: 0.5
+batch_size: 8
