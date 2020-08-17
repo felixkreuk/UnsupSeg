@@ -49,19 +49,18 @@ class Solver(LightningModule):
         })
 
         wandb.init(project=self.hp.project, name=hp.exp_name, config=vars(hp), tags=[hp.tag])
-        self.load_data()
         self.build_model()
 
-    def load_data(self):
+    def prepare_data(self):
         # setup training set
-        if "timit" in self.hp.train:
+        if "timit" in self.hp.data:
             train, val, test = TrainTestDataset.get_datasets(path=self.hp.timit_path)
-        elif "buckeye" in self.hp.train:
+        elif "buckeye" in self.hp.data:
             train, val, test = TrainValTestDataset.get_datasets(path=self.hp.buckeye_path, percent=self.hp.buckeye_percent)
         else:
             raise Exception("no such training data!")
 
-        if "libri" in self.hp.train:
+        if "libri" in self.hp.data:
             libri_train = LibriSpeechDataset(path=self.hp.libri_path,
                                              subset=self.hp.libri_subset,
                                              percent=self.hp.libri_percent)
@@ -140,7 +139,7 @@ class Solver(LightningModule):
 
     def generic_eval_end(self, outputs, mode):
         metrics = {}
-        data = self.hp.train
+        data = self.hp.data
 
         for k, v in self.stats.items():
             metrics[f"train_{k}"] = self.stats[k]["train"].get_stats()

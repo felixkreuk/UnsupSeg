@@ -62,11 +62,14 @@ def main(cfg):
         ckpt = solver.get_ckpt_path()
 
     print(f"running test on ckpt: {ckpt}")
-    print(f"testing for {cfg.train.upper()}")
+    print(f"testing for {cfg.data.upper()}")
     solver = Solver.load_from_checkpoint(ckpt)
-    if cfg.train != solver.hp.train:
-        solver.hp.train = cfg.train
-        solver.load_data()
+
+    # override checkpoint paths with current conf paths
+    solver.hp.timit_path = cfg.timit_path
+    solver.hp.buckeye_path = cfg.buckeye_path
+    solver.hp.libri_path = cfg.libri_path
+    solver.hp.data = cfg.data
     trainer.test(solver)
         
 

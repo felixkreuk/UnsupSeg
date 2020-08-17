@@ -10,7 +10,7 @@ libri_subset: train-clean-100
 libri_percent: 1.0
 buckeye_percent: 1.0
 val_ratio: 0.1  # ratio of validation set
-train: timit
+data: timit
 dataloader_n_workers: 10
 
 # MODEL

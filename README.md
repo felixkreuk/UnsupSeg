@@ -62,6 +62,26 @@ Where `X.wav` is a raw waveform signal, and `X.phn` is its' corresponding phonem
 Where the two numbers each line represent the onset of offset of the phoneme (in samples), and the last element represents the phoneme identity.
 
 ## Usage
+### Data preperation
+To convert default TIMIT file formats to the required format in the `Data structure` section, you should first run the script `scripts/make_timit.py`.
+```
+python scripts/make_timit.py --inpath /path/to/original/timit --outpath /path/to/output/timit
+```
+
+### Configuration
+Prior to using our code you should configure the paths to the TIMIT/Buckeye/Librispeech datasets under `conf/config.yaml`.
+For TIMIT/Buckeye the path should point to a directory with three sub-directories: train, val and test.
+For Librispeech the path should point to a directory that contains the `LibriSpeech` directory downloaded by torchaudio (or by you manually).
+
+For example:
+```
+...
+buckeye_path: /data/datasets/buckeye
+timit_path: /data/datasets/timit
+libri_path: /data/datasets  # under this dir there's a LibriSpeech dir
+...
+```
+
 ### Train
 To run training with default hyper-parameters, run the following:
 ```
@@ -70,17 +90,17 @@ python main.py
 To see further hyper-parameters see `conf/config.yaml`.
 More examples:
 ```
-python main.py train=timit  # train on timit
-python main.py train=buckeye  # train on buckeye
-python main.py train=timit_libri  # timit + librispeech
-python main.py train=timit_libri libri_percent=0.5  # use only 50% of librispeech
+python main.py data=timit  # train on timit
+python main.py data=buckeye  # train on buckeye
+python main.py data=timit_libri  # timit + librispeech
+python main.py data=timit_libri libri_percent=0.5  # use only 50% of librispeech
 ```
 
 ### Test
 The following command runs a test epoch on the selected data and reports results in terms of precision, recall, F1 and R-value.
 ```
-python main.py ckpt=/absolute/path/to/model.ckpt train=timit  # test on timit
-python main.py ckpt=/absolute/path/to/model.ckpt train=buckeye  # test on buckeye
+python main.py ckpt=/absolute/path/to/model.ckpt data=timit  # test on timit
+python main.py ckpt=/absolute/path/to/model.ckpt data=buckeye  # test on buckeye
 ```
 
 ### Inference on a single wav
