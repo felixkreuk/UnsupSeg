@@ -16,7 +16,7 @@ from solver import Solver
 torch.autograd.set_detect_anomaly(True)
 
 
-@hydra.main(config_path='conf/config.yaml', strict=False)
+@hydra.main(config_path="conf/config.yaml", strict=False)
 def main(cfg):
     torch.manual_seed(cfg.seed)
     np.random.seed(cfg.seed)
@@ -36,7 +36,7 @@ def main(cfg):
         verbose=True,
         monitor=cfg.early_stop_metric,
         mode=cfg.early_stop_mode,
-        prefix='',
+        prefix="",
     )
 
     trainer = Trainer(
@@ -51,7 +51,7 @@ def main(cfg):
         gradient_clip_val=cfg.grad_clip,
         val_check_interval=cfg.val_check_interval,
         fast_dev_run=cfg.dev_run,
-        max_epochs=cfg.epochs
+        max_epochs=cfg.epochs,
     )
 
     if cfg.ckpt is not None:
@@ -71,7 +71,7 @@ def main(cfg):
     solver.hp.libri_path = cfg.libri_path
     solver.hp.data = cfg.data
     trainer.test(solver)
-        
+
 
 if __name__ == "__main__":
     main()

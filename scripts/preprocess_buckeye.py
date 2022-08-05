@@ -9,21 +9,32 @@ import os.path as osp
 import argparse
 
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument('--spkr', default=False, action='store_true')
-parser.add_argument('--source', default=False)
-parser.add_argument('--target', default=False)
-parser.add_argument('--min_phonemes', type=int)
-parser.add_argument('--max_phonemes', type=int)
+parser.add_argument("--spkr", default=False, action="store_true")
+parser.add_argument("--source", default=False)
+parser.add_argument("--target", default=False)
+parser.add_argument("--min_phonemes", type=int)
+parser.add_argument("--max_phonemes", type=int)
 args = parser.parse_args()
 
 
-DELIMITER = ['VOCNOISE', 'NOISE', 'SIL']
-FORBIDDEN = ['{B_TRANS}', '{E_TRANS}', '<EXCLUDE-name>', 'LAUGH', 'UNKNOWN', 'IVER-LAUGH', '<exclude-Name>', 'IVER']
+DELIMITER = ["VOCNOISE", "NOISE", "SIL"]
+FORBIDDEN = [
+    "{B_TRANS}",
+    "{E_TRANS}",
+    "<EXCLUDE-name>",
+    "LAUGH",
+    "UNKNOWN",
+    "IVER-LAUGH",
+    "<exclude-Name>",
+    "IVER",
+]
 MIN_PHONEMES = args.min_phonemes
 MAX_PHONEMES = args.max_phonemes
 NOISE_EDGES = 0.2
 is_delim = lambda x: x.seg in DELIMITER
-contain_forbidden = lambda phone_list: not set([p.seg for p in phone_list]).isdisjoint(FORBIDDEN)
+contain_forbidden = lambda phone_list: not set([p.seg for p in phone_list]).isdisjoint(
+    FORBIDDEN
+)
 path = args.source
 output_path = args.target
 train_path = osp.join(output_path, "train")
@@ -42,20 +53,19 @@ os.makedirs(test_path, exist_ok=True)
 
 for wav in tqdm(wavs):
     try:
-        spkr   = osp.basename(wav)[:3]
-        name   = wav.replace(".wav", "")
-        words  = wav.replace("wav", "words")
+        spkr = osp.basename(wav)[:3]
+        name = wav.replace(".wav", "")
+        words = wav.replace("wav", "words")
         phones = wav.replace("wav", "phones")
-        log    = wav.replace("wav", "log")
-        txt    = wav.replace("wav", "txt")
-        track  = buckeye.Track(name=name,
-                               words=words,
-                               phones=phones,
-                               log=log,
-                               txt=txt,
-                               wav=wav)
+        log = wav.replace("wav", "log")
+        txt = wav.replace("wav", "txt")
+        track = buckeye.Track(
+            name=name, words=words, phones=phones, log=log, txt=txt, wav=wav
+        )
         phones = track.phones[1:-1]
-        delim_locations = np.array([i for i, phone in enumerate(phones) if is_delim(phone)])
+        delim_locations = np.array(
+            [i for i, phone in enumerate(phones) if is_delim(phone)]
+        )
         loaded_wav, sr = sf.read(wav)
 
         # in some files the last segment annotation ends after the
@@ -68,11 +78,13 @@ for wav in tqdm(wavs):
 
         # iterate over all phone segments inside wav
         for start, end in zip(delim_locations[:-1], delim_locations[1:]):
-            segment = phones[start:end+1]
+            segment = phones[start : end + 1]
 
             # if contains forbidden annotations, or number of segments is
             # not in the desired range => ignore
-            if contain_forbidden(segment) or not (MIN_PHONEMES < end - start < MAX_PHONEMES):
+            if contain_forbidden(segment) or not (
+                MIN_PHONEMES < end - start < MAX_PHONEMES
+            ):
                 continue
 
             # make sure that the noise/sil on the edges is less than
@@ -84,14 +96,23 @@ for wav in tqdm(wavs):
 
             # get stat and end times
             segment_start_time = segment[0].beg
-            segment_end_time   = segment[-1].end
+            segment_end_time = segment[-1].end
 
             # trim wav according to start and end
             # also, extract from the .phn file the corresponding phonemes
             output_wav_file = f"{spkr}_{file_counter}.wav"
             output_phn_file = f"{spkr}_{file_counter}.phn"
-            track.clip_wav(osp.join(output_path, output_wav_file), segment_start_time, segment_end_time)
-            phn_data = "\n".join([f"{int((p.beg - segment_start_time) * sr)} {int((p.end - segment_start_time) * sr)} {p.seg}" for p in segment])
+            track.clip_wav(
+                osp.join(output_path, output_wav_file),
+                segment_start_time,
+                segment_end_time,
+            )
+            phn_data = "\n".join(
+                [
+                    f"{int((p.beg - segment_start_time) * sr)} {int((p.end - segment_start_time) * sr)} {p.seg}"
+                    for p in segment
+                ]
+            )
             with open(osp.join(output_path, output_phn_file), "w") as f:
                 f.writelines(phn_data)
             file_counter += 1
@@ -114,7 +135,7 @@ print(f"{secs.sum() / (60*60)} hours")
 if args.spkr:
     os.chdir(output_path)
     test_spkrs = ["s07", "s03", "s31", "s34"]
-    val_spkrs  = ["s40", "s39", "s36", "s25"]
+    val_spkrs = ["s40", "s39", "s36", "s25"]
     for spkr in test_spkrs:
         os.system(f"mv {spkr}* test/")
     for spkr in val_spkrs:
