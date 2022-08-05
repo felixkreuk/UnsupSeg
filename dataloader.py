@@ -2,7 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset
-torch.multiprocessing.set_sharing_strategy('file_system')
+
+torch.multiprocessing.set_sharing_strategy("file_system")
 from tqdm import tqdm
 import numpy as np
 import os
@@ -38,9 +39,11 @@ def collate_fn_padd(batch):
 
 
 def spectral_size(wav_len):
-    layers = [(10,5,0), (8,4,0), (4,2,0), (4,2,0), (4,2,0)]
+    layers = [(10, 5, 0), (8, 4, 0), (4, 2, 0), (4, 2, 0), (4, 2, 0)]
     for kernel, stride, padding in layers:
-        wav_len = math.floor((wav_len + 2*padding - 1*(kernel-1) - 1)/stride + 1)
+        wav_len = math.floor(
+            (wav_len + 2 * padding - 1 * (kernel - 1) - 1) / stride + 1
+        )
     return wav_len
 
 
@@ -69,7 +72,7 @@ class WavPhnDataset(Dataset):
         audio = audio[0]
         audio_len = len(audio)
         spectral_len = spectral_size(audio_len)
-        len_ratio = (audio_len / spectral_len)
+        len_ratio = audio_len / spectral_len
 
         # load labels -- segmentation and phonemes
         with open(phn_path, "r") as f:
@@ -77,7 +80,11 @@ class WavPhnDataset(Dataset):
             lines = list(map(lambda line: line.split(" "), lines))
 
             # get segment times
-            times = torch.FloatTensor(list(map(lambda line: int(int(line[1]) / len_ratio), lines)))[:-1]  # don't count end time as boundary
+            times = torch.FloatTensor(
+                list(map(lambda line: int(int(line[1]) / len_ratio), lines))
+            )[
+                :-1
+            ]  # don't count end time as boundary
 
             # get phonemes in each segment (for K times there should be K+1 phonemes)
             phonemes = list(map(lambda line: line[2].strip(), lines))
@@ -98,16 +105,18 @@ class TrainTestDataset(WavPhnDataset):
 
     @staticmethod
     def get_datasets(path, val_ratio=0.1):
-        train_dataset = TrainTestDataset(join(path, 'train'))
-        test_dataset  = TrainTestDataset(join(path, 'test'))
+        train_dataset = TrainTestDataset(join(path, "train"))
+        test_dataset = TrainTestDataset(join(path, "test"))
 
-        train_len   = len(train_dataset)
+        train_len = len(train_dataset)
         train_split = int(train_len * (1 - val_ratio))
-        val_split   = train_len - train_split
-        train_dataset, val_dataset = torch.utils.data.random_split(train_dataset, [train_split, val_split])
+        val_split = train_len - train_split
+        train_dataset, val_dataset = torch.utils.data.random_split(
+            train_dataset, [train_split, val_split]
+        )
 
-        train_dataset.path = join(path, 'train')
-        val_dataset.path = join(path, 'train')
+        train_dataset.path = join(path, "train")
+        val_dataset.path = join(path, "train")
 
         return train_dataset, val_dataset, test_dataset
 
@@ -118,12 +127,12 @@ class TrainValTestDataset(WavPhnDataset):
 
     @staticmethod
     def get_datasets(path, percent=1.0):
-        train_dataset = TrainValTestDataset(join(path, 'train'))
+        train_dataset = TrainValTestDataset(join(path, "train"))
         if percent != 1.0:
             train_dataset = get_subset(train_dataset, percent)
-            train_dataset.path = join(path, 'train')
-        val_dataset   = TrainValTestDataset(join(path, 'val'))
-        test_dataset  = TrainValTestDataset(join(path, 'test'))
+            train_dataset.path = join(path, "train")
+        val_dataset = TrainValTestDataset(join(path, "val"))
+        test_dataset = TrainValTestDataset(join(path, "test"))
 
         return train_dataset, val_dataset, test_dataset
 
@@ -134,7 +143,7 @@ class LibriSpeechDataset(LIBRISPEECH):
         if percent != 1.0:
             self.libri_dataset = get_subset(self.libri_dataset, percent)
         self.path = path
-    
+
     def __getitem__(self, idx):
         wav, sr, utt, spk_id, chp_id, utt_id = self.libri_dataset[idx]
         wav = wav[0]
@@ -150,10 +159,10 @@ class MixedDataset(Dataset):
         self.ds2 = ds2
         self.path = f"{ds1.path}+{ds2.path}"
         self.ds1_len, self.ds2_len = len(ds1), len(ds2)
-    
+
     def __len__(self):
         return self.ds1_len + self.ds2_len
-    
+
     def __getitem__(self, idx):
         if idx < self.ds1_len:
             return self.ds1[idx]

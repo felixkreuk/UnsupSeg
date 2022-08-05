@@ -9,13 +9,17 @@ from tqdm import tqdm
 
 
 def replicate_first_k_frames(x, k, dim):
-    return torch.cat([x.index_select(dim=dim, index=torch.LongTensor([0] * k).to(x.device)), x], dim=dim)
+    return torch.cat(
+        [x.index_select(dim=dim, index=torch.LongTensor([0] * k).to(x.device)), x],
+        dim=dim,
+    )
 
 
 class LambdaLayer(nn.Module):
     def __init__(self, lambd):
         super(LambdaLayer, self).__init__()
         self.lambd = lambd
+
     def forward(self, x):
         return self.lambd(x)
 
@@ -23,6 +27,7 @@ class LambdaLayer(nn.Module):
 class PrintShapeLayer(nn.Module):
     def __init__(self):
         super(PrintShapeLayer, self).__init__()
+
     def forward(self, x):
         print(x.shape)
         return x
@@ -33,10 +38,11 @@ def length_to_mask(length, max_len=None, dtype=None):
     return B x max_len.
     If max_len is None, then max of length will be used.
     """
-    assert len(length.shape) == 1, 'Length shape should be 1 dimensional.'
+    assert len(length.shape) == 1, "Length shape should be 1 dimensional."
     max_len = max_len or length.max().item()
-    mask = torch.arange(max_len, device=length.device,
-                        dtype=length.dtype).expand(len(length), max_len) < length.unsqueeze(1)
+    mask = torch.arange(max_len, device=length.device, dtype=length.dtype).expand(
+        len(length), max_len
+    ) < length.unsqueeze(1)
     if dtype is not None:
         mask = torch.as_tensor(mask, dtype=dtype, device=length.device)
     return mask
@@ -44,10 +50,10 @@ def length_to_mask(length, max_len=None, dtype=None):
 
 def detect_peaks(x, lengths, prominence=0.1, width=None, distance=None):
     """detect peaks of next_frame_classifier
-    
+
     Arguments:
         x {Tensor} -- batch of confidence per time
-    """ 
+    """
     out = []
 
     for xi, li in zip(x, lengths):
@@ -59,7 +65,7 @@ def detect_peaks(x, lengths, prominence=0.1, width=None, distance=None):
         peaks, _ = find_peaks(xi, prominence=prominence, width=width, distance=distance)
 
         if len(peaks) == 0:
-            peaks = np.array([len(xi)-1])
+            peaks = np.array([len(xi) - 1])
 
         out.append(peaks)
 
@@ -81,13 +87,13 @@ class PrecisionRecallMetric:
 
     def get_metrics(self, precision_counter, recall_counter, pred_counter, gt_counter):
         EPS = 1e-7
-        
+
         precision = precision_counter / (pred_counter + self.eps)
         recall = recall_counter / (gt_counter + self.eps)
         f1 = 2 * (precision * recall) / (precision + recall + self.eps)
-        
+
         os = recall / (precision + EPS) - 1
-        r1 = np.sqrt((1 - recall) ** 2 + os ** 2)
+        r1 = np.sqrt((1 - recall) ** 2 + os**2)
         r2 = (-os + recall - 1) / (np.sqrt(2))
         rval = 1 - (np.abs(r1) + np.abs(r2)) / 2
 
@@ -98,7 +104,9 @@ class PrecisionRecallMetric:
 
     def update(self, seg, pos_pred, length):
         for seg_i, pos_pred_i, length_i in zip(seg, pos_pred, length):
-            self.data.append((seg_i, pos_pred_i.cpu().detach().numpy(), length_i.item()))
+            self.data.append(
+                (seg_i, pos_pred_i.cpu().detach().numpy(), length_i.item())
+            )
 
     def get_stats(self, width=None, prominence=None, distance=None):
         print(f"calculating metrics using {len(self.data)} entries")
@@ -125,32 +133,35 @@ class PrecisionRecallMetric:
                     recall_counter = 0
                     pred_counter = 0
                     gt_counter = 0
-                    peaks = detect_peaks(yhats,
-                                         length,
-                                         prominence=prominence,
-                                         width=width,
-                                         distance=distance)
+                    peaks = detect_peaks(
+                        yhats,
+                        length,
+                        prominence=prominence,
+                        width=width,
+                        distance=distance,
+                    )
 
                     for (y, yhat) in zip(segs, peaks):
                         for yhat_i in yhat:
                             min_dist = np.abs(y - yhat_i).min()
-                            precision_counter += (min_dist <= self.tolerance)
+                            precision_counter += min_dist <= self.tolerance
                         for y_i in y:
                             min_dist = np.abs(yhat - y_i).min()
-                            recall_counter += (min_dist <= self.tolerance)
+                            recall_counter += min_dist <= self.tolerance
                         pred_counter += len(yhat)
                         gt_counter += len(y)
 
-                    p, r, f1, rval = self.get_metrics(precision_counter,
-                                                      recall_counter,
-                                                      pred_counter,
-                                                      gt_counter)
+                    p, r, f1, rval = self.get_metrics(
+                        precision_counter, recall_counter, pred_counter, gt_counter
+                    )
                     if rval > max_rval:
                         max_rval = rval
                         best_params = width, prominence, distance
                         out = (p, r, f1, rval)
         self.zero()
-        print(f"best peak detection params: {best_params} (width, prominence, distance)")
+        print(
+            f"best peak detection params: {best_params} (width, prominence, distance)"
+        )
         return out, best_params
 
 
