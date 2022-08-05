@@ -8,24 +8,19 @@ import pytorch_lightning as pl
 from pytorch_lightning import LightningModule
 import torch_optimizer as optim_extra
 
-import torch
 from torch import optim
 from torch.utils.data import ConcatDataset, DataLoader
-import torchaudio
 
 from dataloader import (
     LibriSpeechDataset,
-    MixedDataset,
     TrainTestDataset,
     TrainValTestDataset,
     collate_fn_padd,
-    spectral_size,
 )
 from next_frame_classifier import NextFrameClassifier
 from utils import (
     PrecisionRecallMetric,
     StatsMeter,
-    detect_peaks,
     line,
     max_min_norm,
     replicate_first_k_frames,
@@ -185,7 +180,8 @@ class Solver(LightningModule):
                     )
             else:
                 print(
-                    f"using pre-defined peak detection values - {pred_type} - {self.peak_detection_params[pred_type]}"
+                        f"using pre-defined peak detection values - {pred_type} -"
+                        f" {self.peak_detection_params[pred_type]}"
                 )
                 (precision, recall, f1, rval), _ = self.pr[pred_type][mode].get_stats(
                     width=self.peak_detection_params[pred_type]["width"],

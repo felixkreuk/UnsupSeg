@@ -1,11 +1,8 @@
-import random
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 import time
 from scipy.signal import find_peaks
-import wandb
-from tqdm import tqdm
 
 
 def replicate_first_k_frames(x, k, dim):

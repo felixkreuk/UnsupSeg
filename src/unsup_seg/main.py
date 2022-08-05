@@ -2,14 +2,12 @@ import os
 import random
 import socket
 from argparse import Namespace
-from distutils.dir_util import copy_tree
 
 import hydra
 import numpy as np
 import torch
 from pytorch_lightning import Trainer
-from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
-from torch.backends import cudnn
+from pytorch_lightning.callbacks import ModelCheckpoint
 
 from solver import Solver
 

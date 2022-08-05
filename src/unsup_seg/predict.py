@@ -1,11 +1,9 @@
 import argparse
 import dill
-from argparse import Namespace
 import librosa
 import torch
-import torchaudio
-from utils import detect_peaks, max_min_norm, replicate_first_k_frames
-from next_frame_classifier import NextFrameClassifier
+from unsup_seg.utils import detect_peaks, max_min_norm, replicate_first_k_frames
+from unsup_seg.next_frame_classifier import NextFrameClassifier
 
 
 SR = 16000
@@ -17,7 +15,7 @@ def main(wav, ckpt, prominence):
     print("\n\n", 90 * "-")
 
     ckpt = torch.load(ckpt, map_location=lambda storage, loc: storage)
-    hp = Namespace(**dict(ckpt["hparams"]))
+    hp = argparse.Namespace(**dict(ckpt["hparams"]))
 
     # load weights and peak detection params
     model = NextFrameClassifier(hp)

@@ -1,11 +1,11 @@
-import numpy as np
+from collections import defaultdict
+import hydra
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import hydra
-from utils import LambdaLayer, PrintShapeLayer, length_to_mask
-from dataloader import TrainTestDataset
-from collections import defaultdict
+
+from unsup_seg.utils import LambdaLayer, length_to_mask
+from unsup_seg.dataloader import TrainTestDataset
 
 
 class NextFrameClassifier(nn.Module):
@@ -65,8 +65,6 @@ class NextFrameClassifier(nn.Module):
         return F.cosine_similarity(f, b, dim=-1) * self.hp.cosine_coef
 
     def forward(self, spect):
-        device = spect.device
-
         # wav => latent z
         z = self.enc(spect.unsqueeze(1))
 
@@ -111,7 +109,8 @@ def main(cfg):
 
     model = NextFrameClassifier(cfg)
     out = model(spect, length)
+    return out
 
 
 if __name__ == "__main__":
-    main()
+    out = main()
