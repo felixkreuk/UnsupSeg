@@ -1,10 +1,14 @@
 import argparse
 import dill
 from argparse import Namespace
+import librosa
 import torch
 import torchaudio
 from utils import (detect_peaks, max_min_norm, replicate_first_k_frames)
 from next_frame_classifier import NextFrameClassifier
+
+
+SR = 16000
 
 
 def main(wav, ckpt, prominence):
@@ -26,10 +30,11 @@ def main(wav, ckpt, prominence):
         peak_detection_params["prominence"] = prominence
 
     # load data
-    audio, sr = torchaudio.load(wav)
-    assert sr == 16000, "model was trained with audio sampled at 16khz, please downsample."
-    audio = audio[0]
-    audio = audio.unsqueeze(0)
+    signal, sr = librosa.core.load(wav, sr=SR)
+    assert (
+        sr == 16000
+    ), "model was trained with audio sampled at 16khz, please downsample."
+    audio = torch.tensor(signal, dtype=torch.float32).unsqueeze(0)
 
     # run inference
     preds = model(audio)  # get scores
