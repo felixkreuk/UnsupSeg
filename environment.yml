@@ -1,0 +1,25 @@
+name: unsup_seg
+
+channels:
+  - anaconda
+  - defaults
+  - pytorch
+  - conda-forge
+
+dependencies:
+  - black==22.3.0
+  - librosa
+  - pip
+  - pytorch==1.4.0
+  - pytorch-lightning==0.7.6
+  - python==3.7.13
+  - scipy==1.6.3
+  - torchaudio==0.4.0
+  - tqdm
+  - wandb
+
+  - pip:
+    - boltons==20.0.0
+    - dill==0.3.1.1
+    - hydra-core==0.11.3
+    - torch-optimizer==0.0.1
