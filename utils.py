@@ -80,13 +80,11 @@ class PrecisionRecallMetric:
         self.distance_range = [None, 1]
 
     def get_metrics(self, precision_counter, recall_counter, pred_counter, gt_counter):
-        EPS = 1e-7
-        
         precision = precision_counter / (pred_counter + self.eps)
         recall = recall_counter / (gt_counter + self.eps)
         f1 = 2 * (precision * recall) / (precision + recall + self.eps)
         
-        os = recall / (precision + EPS) - 1
+        os = recall / (precision + self.eps) - 1
         r1 = np.sqrt((1 - recall) ** 2 + os ** 2)
         r2 = (-os + recall - 1) / (np.sqrt(2))
         rval = 1 - (np.abs(r1) + np.abs(r2)) / 2
@@ -121,6 +119,7 @@ class PrecisionRecallMetric:
         for width in width_range:
             for prominence in prominence_range:
                 for distance in distance_range:
+                    
                     precision_counter = 0
                     recall_counter = 0
                     pred_counter = 0
@@ -131,6 +130,8 @@ class PrecisionRecallMetric:
                                          width=width,
                                          distance=distance)
 
+                    # This method Overcounts:
+                    ''' 
                     for (y, yhat) in zip(segs, peaks):
                         for yhat_i in yhat:
                             min_dist = np.abs(y - yhat_i).min()
@@ -140,6 +141,41 @@ class PrecisionRecallMetric:
                             recall_counter += (min_dist <= self.tolerance)
                         pred_counter += len(yhat)
                         gt_counter += len(y)
+                    '''
+                    # making sure that each pred/gt is counted only once
+                    '''
+                    Iterate through each ground truth value.
+                    For each ground truth, find the first unmatched prediction that is within the tolerance.
+                    If a match is found, we mark both the ground truth and the prediction as matched, and increment both precision and recall counters.
+                    This ensures that each ground truth and each prediction is matched at most once.
+                    '''
+
+                    for y_trues, y_preds in zip(segs, peaks):
+                        y_trues = np.array(y_trues)
+                        y_preds = np.array(y_preds)
+
+                        # Create distance matrix
+                        dist_matrix = np.abs(y_trues[:, np.newaxis] - y_preds)
+
+                        # Find matches within tolerance
+                        matches = dist_matrix <= self.tolerance
+
+                        # Greedy matching
+                        true_matched = set()
+                        pred_matched = set()
+
+                        for i in range(len(y_trues)):
+                            for j in range(len(y_preds)):
+                                if matches[i, j] and i not in true_matched and j not in pred_matched:
+                                    true_matched.add(i)
+                                    pred_matched.add(j)
+                                    precision_counter += 1
+                                    recall_counter += 1
+                                    break  # Move to next ground truth
+
+                        # Count total predictions and ground truth
+                        pred_counter += len(y_preds)
+                        gt_counter += len(y_trues)
 
                     p, r, f1, rval = self.get_metrics(precision_counter,
                                                       recall_counter,
